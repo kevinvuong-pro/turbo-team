@@ -9,7 +9,9 @@ export function proxy(request: NextRequest) {
   const refreshToken = request.cookies.get('refreshToken')?.value;
 
   if (isPublic && refreshToken) {
-    return NextResponse.redirect(new URL('/', request.url));
+    const url = new URL('/', request.url);
+
+    return NextResponse.redirect(url);
   }
 
   if (!isPublic && !refreshToken) {
