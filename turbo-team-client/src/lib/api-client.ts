@@ -29,7 +29,6 @@ apiClient.interceptors.response.use(
   (response) => response.data,
   async (error) => {
     const originalRequest = error.config;
-    const currentPath = window.location.pathname;
 
     if (error.response?.status === 403) {
       if (typeof window !== 'undefined') {
