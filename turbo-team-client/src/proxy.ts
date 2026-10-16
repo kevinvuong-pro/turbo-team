@@ -8,7 +8,7 @@ export function proxy(request: NextRequest) {
   const isPublic = isPublicRoute(pathname);
   const refreshToken = request.cookies.get('refreshToken')?.value;
 
-  if (isPublic && refreshToken && !pathname.startsWith('/stats')) {
+  if (isPublic && refreshToken) {
     const url = new URL('/', request.url);
 
     return NextResponse.redirect(url);

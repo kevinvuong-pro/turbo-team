@@ -5,7 +5,9 @@ const getPublicRoutes = (): string[] => {
   const publicDir = path.join(process.cwd(), 'src/app/(public)');
 
   try {
-    const entries = fs.readdirSync(publicDir, { withFileTypes: true });
+    const entries = fs.readdirSync(publicDir, {
+      withFileTypes: true,
+    });
 
     return entries.filter((entry) => entry.isDirectory()).map((entry) => `/${entry.name}`);
   } catch {
@@ -16,5 +18,5 @@ const getPublicRoutes = (): string[] => {
 export const isPublicRoute = (pathname: string): boolean => {
   const publicRoutes = getPublicRoutes();
 
-  return pathname.startsWith('/stats') || publicRoutes.some((route) => pathname.startsWith(route));
+  return publicRoutes.some((route) => pathname === route || pathname.startsWith(`${route}/`));
 };
