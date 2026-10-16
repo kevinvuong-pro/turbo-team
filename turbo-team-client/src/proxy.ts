@@ -18,7 +18,7 @@ export function proxy(request: NextRequest) {
     const url = new URL('/stats', request.url);
     url.searchParams.set('redirect', pathname);
 
-    return NextResponse.redirect(url);
+    // return NextResponse.redirect(url);
   }
 
   return NextResponse.next();
