@@ -1,0 +1,267 @@
+'use client';
+
+import Link from 'next/link';
+import { toast } from 'sonner';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { LogOut, Tablet, Loader2, Monitor, Smartphone } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
+import {
+  AlertDialog,
+  AlertDialogTitle,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogContent,
+  AlertDialogDescription,
+} from '@/components/ui/alert-dialog';
+import { useI18n } from '@/context/i18n';
+import { Session } from '@/types/session';
+import { Button } from '@/components/ui/button';
+import { getSessions } from '@/services/sessions';
+import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { logoutDevice, logoutAllDevices } from '@/services/users';
+
+export default function SessionsPage() {
+  const { t } = useI18n();
+  const router = useRouter();
+  const queryClient = useQueryClient();
+
+  const [selectedSessionId, setSelectedSessionId] = useState('');
+  const [issDialogOpen, setIsDialogOpen] = useState({ all: false, single: false });
+
+  const { data, isLoading } = useQuery({
+    queryFn: getSessions,
+    queryKey: ['getSessions'],
+  });
+
+  const { mutate: logoutDeviceMutation, isPending: isLogoutDevicePending } = useMutation({
+    onError: (error) => toast.error(error.message),
+    onSuccess: () => {
+      setSelectedSessionId('');
+      toast.success(t.sessions.logoutSuccess);
+      setIsDialogOpen((prev) => ({ ...prev, single: false }));
+
+      queryClient.invalidateQueries({ queryKey: ['getSessions'] });
+    },
+    mutationFn: (sessionId: string) => logoutDevice({ tokenId: sessionId }),
+  });
+
+  const { mutate: logoutAllDevicesMutation, isPending: isLogoutAllDevicesPending } = useMutation({
+    mutationFn: logoutAllDevices,
+    onError: (error) => toast.error(error.message),
+    onSuccess: () => {
+      toast.success(t.sessions.logoutAllSuccess);
+      setIsDialogOpen((prev) => ({ ...prev, all: false }));
+
+      setTimeout(() => router.push('/login'), 3000);
+    },
+  });
+
+  const openLogoutDialog = (sessionId: string) => {
+    setSelectedSessionId(sessionId);
+    setIsDialogOpen((prev) => ({ ...prev, single: true }));
+  };
+
+  const getDeviceIcon = (deviceType: string) => {
+    const type = deviceType.toLowerCase();
+
+    if (type.includes('mobile') || type.includes('phone')) {
+      return <Smartphone className="h-5 w-5" />;
+    }
+
+    if (type.includes('tablet')) {
+      return <Tablet className="h-5 w-5" />;
+    }
+
+    return <Monitor className="h-5 w-5" />;
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+
+    return date.toLocaleString(undefined, {
+      day: 'numeric',
+      month: 'short',
+      hour: '2-digit',
+      year: 'numeric',
+      minute: '2-digit',
+    });
+  };
+
+  if (isLoading) {
+    return <Loader2 className="h-8 w-8 animate-spin text-primary" />;
+  }
+
+  return (
+    <>
+      <div className="w-full max-w-2xl">
+        <div className="space-y-6 rounded-lg border border-border bg-card p-8 text-card-foreground shadow-2xl shadow-black/10 dark:shadow-black/30">
+          <div className="space-y-2 text-center">
+            <h1 className="text-2xl font-bold tracking-tight">{t.sessions.title}</h1>
+            <p className="text-sm text-muted-foreground">{t.sessions.description}</p>
+          </div>
+
+          {(data?.meta.total ?? 0) > 1 && (
+            <div className="flex justify-end border-b pb-4">
+              <Button
+                variant="destructive"
+                onClick={() => setIsDialogOpen((prev) => ({ ...prev, all: true }))}
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                {t.sessions.logoutAllOthers.replace('{count}', (data?.meta.total ?? 0).toString())}
+              </Button>
+            </div>
+          )}
+
+          <div className="space-y-3">
+            <ScrollArea className="h-[432px] w-full">
+              <div className="pr-4">
+                {data?.items.map((session: Session, index: number) => (
+                  <div key={session.id}>
+                    <div
+                      className={`rounded-lg p-3 transition-colors ${
+                        session.isCurrent
+                          ? 'border-2 border-primary bg-primary/10 dark:bg-primary/20'
+                          : 'bg-muted/50 hover:bg-muted'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex min-w-0 flex-1 items-start gap-3">
+                          <div
+                            className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full ${
+                              session.isCurrent ? 'bg-primary/20 dark:bg-primary/30' : 'bg-muted'
+                            }`}
+                          >
+                            {getDeviceIcon(session.deviceType)}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <p className="text-sm font-medium">{session.deviceName}</p>
+                              {session.isCurrent && (
+                                <span className="inline-flex items-center rounded-full bg-primary px-2 py-0.5 text-xs font-bold text-primary-foreground">
+                                  {t.sessions.currentDevice}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              {session.deviceType} • {session.ipAddress}
+                            </p>
+                            <div className="mt-2 space-y-1 text-xs">
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">
+                                  {t.sessions.createdAt}:
+                                </span>
+                                <span className="font-medium">{formatDate(session.createdAt)}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">
+                                  {t.sessions.lastUsed}:
+                                </span>
+                                <span className="font-medium">
+                                  {formatDate(session.lastUsedAt)}
+                                </span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">
+                                  {t.sessions.expiresAt}:
+                                </span>
+                                <span className="font-medium">{formatDate(session.expiresAt)}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        {!session.isCurrent && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="flex-shrink-0 text-destructive hover:bg-destructive/10"
+                            onClick={() => openLogoutDialog(session.id)}
+                          >
+                            <LogOut className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                    {index < (data?.items.length ?? 0) - 1 && <Separator className="my-3" />}
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+          </div>
+
+          <div className="border-t pt-4">
+            <Button asChild variant="outline" className="w-full">
+              <Link href="/">{t.sessions.backToHome}</Link>
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <AlertDialog
+        open={issDialogOpen.single}
+        onOpenChange={(open) => setIsDialogOpen((prev) => ({ ...prev, single: open }))}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-destructive">
+              {t.sessions.logoutDeviceConfirmTitle}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t.sessions.logoutDeviceConfirmDescription}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t.sessions.cancel}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (selectedSessionId) {
+                  logoutDeviceMutation(selectedSessionId);
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isLogoutDevicePending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                t.sessions.confirm
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={issDialogOpen.all}
+        onOpenChange={(open) => setIsDialogOpen((prev) => ({ ...prev, all: open }))}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-destructive">
+              {t.sessions.logoutAllConfirmTitle}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t.sessions.logoutAllConfirmDescription}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t.sessions.cancel}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={logoutAllDevicesMutation}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isLogoutAllDevicesPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                t.sessions.confirm
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
+}
