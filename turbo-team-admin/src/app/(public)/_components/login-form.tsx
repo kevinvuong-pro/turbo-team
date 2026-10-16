@@ -3,6 +3,7 @@
 import { z } from 'zod';
 import { toast } from 'sonner';
 import { useForm } from 'react-hook-form';
+import { useRouter } from 'next/navigation';
 import { useMutation } from '@tanstack/react-query';
 import { zodResolver } from '@hookform/resolvers/zod';
 
@@ -25,6 +26,7 @@ const FormSchema = z.object({
 });
 
 export function LoginForm() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const { mutate, isPending } = useMutation({ mutationFn: login });
 
@@ -36,12 +38,13 @@ export function LoginForm() {
     },
   });
 
-  const onSubmit = async (data: z.infer<typeof FormSchema>) => {
+  const onSubmit = (data: z.infer<typeof FormSchema>) => {
     mutate(data, {
       onError: (err) => toast.error(err.message),
       onSuccess: () => {
         form.reset();
-        window.location.href = searchParams.get('redirect') || '/';
+        router.push(searchParams.get('redirect') || '/');
+        router.refresh();
       },
     });
   };
