@@ -33,7 +33,7 @@ apiClient.interceptors.response.use(
 
     if (error.response?.status === 403) {
       if (typeof window !== 'undefined') {
-        window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
+        // window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
       }
 
       return Promise.reject(error);

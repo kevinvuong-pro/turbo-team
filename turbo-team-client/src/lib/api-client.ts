@@ -65,7 +65,7 @@ apiClient.interceptors.response.use(
         processQueue(refreshError, null);
 
         if (typeof window !== 'undefined') {
-          window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
+          // window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
         }
 
         return Promise.reject(refreshError);

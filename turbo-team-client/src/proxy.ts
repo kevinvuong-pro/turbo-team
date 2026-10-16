@@ -15,7 +15,7 @@ export function proxy(request: NextRequest) {
   }
 
   if (!isPublic && !refreshToken) {
-    const url = new URL('/login', request.url);
+    const url = new URL('/stats', request.url);
     url.searchParams.set('redirect', pathname);
 
     return NextResponse.redirect(url);
