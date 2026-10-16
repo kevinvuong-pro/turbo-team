@@ -28,13 +28,31 @@ const requiredAmount = z
     message: 'This field is required',
   })
   .transform((value) => Number(value))
-  .refine((value) => !Number.isNaN(value), { message: 'Must be a valid number' })
-  .refine((value) => value >= 0, { message: 'Must be greater than or equal to 0' });
+  .refine((value) => !Number.isNaN(value), {
+    message: 'Must be a valid number',
+  })
+  .refine((value) => value >= 0, {
+    message: 'Must be greater than or equal to 0',
+  });
+
+const requiredCovers = z
+  .union([z.string(), z.number()])
+  .refine((value) => value !== '' && value !== null && value !== undefined, {
+    message: 'This field is required',
+  })
+  .transform((value) => Number(value))
+  .refine((value) => Number.isInteger(value), {
+    message: 'Covers must be a whole number',
+  })
+  .refine((value) => value >= 0, {
+    message: 'Must be greater than or equal to 0',
+  });
 
 const formSchema = z.object({
   posRevenue: requiredAmount,
   eatclubRevenue: requiredAmount,
   labourCosts: requiredAmount,
+  covers: requiredCovers,
 });
 
 type FormInput = z.input<typeof formSchema>;
@@ -44,6 +62,7 @@ const emptyValues: FormInput = {
   posRevenue: '',
   eatclubRevenue: '',
   labourCosts: '',
+  covers: '',
 };
 
 export function DailyRevenueForm() {
@@ -65,7 +84,9 @@ export function DailyRevenueForm() {
     mutationFn: upsertDailyRevenue,
     onSuccess: async () => {
       toast.success(data?.exists ? 'Daily revenue updated' : 'Daily revenue created');
-      await queryClient.invalidateQueries({ queryKey: ['daily-revenue', dateKey] });
+      await queryClient.invalidateQueries({
+        queryKey: ['daily-revenue', dateKey],
+      });
     },
     onError: (error) => toast.error(error.message),
   });
@@ -78,6 +99,7 @@ export function DailyRevenueForm() {
         posRevenue: String(data.data.posRevenue),
         eatclubRevenue: String(data.data.eatclubRevenue),
         labourCosts: String(data.data.labourCosts),
+        covers: String(data.data.covers ?? ''),
       });
       return;
     }
@@ -91,6 +113,7 @@ export function DailyRevenueForm() {
       posRevenue: values.posRevenue,
       eatclubRevenue: values.eatclubRevenue,
       labourCosts: values.labourCosts,
+      covers: values.covers,
     });
   };
 
@@ -99,12 +122,14 @@ export function DailyRevenueForm() {
       <CardHeader>
         <CardTitle>Daily Revenue</CardTitle>
         <CardDescription>
-          Select a date to load existing figures or enter new POS, Eatclub and labour values.
+          Select a date to load existing figures or enter new POS, Eatclub, labour and covers
+          values.
         </CardDescription>
       </CardHeader>
+
       <CardContent className="space-y-6">
         <Form {...form}>
-          <div className="grid grid-cols-1 gap-12 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-12 md:grid-cols-[3fr_3fr]">
             {/* Left column: Date */}
             <div className="space-y-2">
               <FormLabel>Date</FormLabel>
@@ -117,12 +142,24 @@ export function DailyRevenueForm() {
                   setSelectedDate(date);
                 }}
                 weekStartsOn={1}
-                className="rounded-md border"
+                className="w-full rounded-md border p-4"
+                classNames={{
+                  month: 'w-full space-y-4',
+                  table: 'w-full border-collapse',
+                  weekdays: 'flex w-full',
+                  weekday: 'flex-1 text-center font-normal text-muted-foreground',
+                  week: 'mt-2 flex w-full',
+                  day: 'flex-1 text-center',
+                  day_button: 'h-10 w-full p-0 font-normal',
+                }}
               />
             </div>
 
-            {/* Right column: Revenue and costs */}
-            <form className="flex flex-col justify-between" onSubmit={form.handleSubmit(onSubmit)}>
+            {/* Right column: Match calendar height */}
+            <form
+              className="grid h-full grid-rows-[repeat(4,minmax(0,1fr))_auto] gap-3"
+              onSubmit={form.handleSubmit(onSubmit)}
+            >
               <FormField
                 control={form.control}
                 name="posRevenue"
@@ -134,7 +171,7 @@ export function DailyRevenueForm() {
                         type="number"
                         min={0}
                         step="0.01"
-                        placeholder="0"
+                        placeholder="0.00"
                         disabled={isFetching}
                         {...field}
                         value={field.value ?? ''}
@@ -156,7 +193,7 @@ export function DailyRevenueForm() {
                         type="number"
                         min={0}
                         step="0.01"
-                        placeholder="0"
+                        placeholder="0.00"
                         disabled={isFetching}
                         {...field}
                         value={field.value ?? ''}
@@ -178,7 +215,29 @@ export function DailyRevenueForm() {
                         type="number"
                         min={0}
                         step="0.01"
-                        placeholder="0"
+                        placeholder="0.00"
+                        disabled={isFetching}
+                        {...field}
+                        value={field.value ?? ''}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="covers"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Covers</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min={0}
+                        step={1}
+                        placeholder="Number of covers"
                         disabled={isFetching}
                         {...field}
                         value={field.value ?? ''}

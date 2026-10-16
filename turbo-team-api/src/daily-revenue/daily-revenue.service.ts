@@ -75,11 +75,13 @@ export class DailyRevenueService {
         posRevenue: dto.posRevenue,
         eatclubRevenue: dto.eatclubRevenue,
         labourCosts: dto.labourCosts,
+        covers: dto.covers,
       },
       update: {
         posRevenue: dto.posRevenue,
         eatclubRevenue: dto.eatclubRevenue,
         labourCosts: dto.labourCosts,
+        covers: dto.covers,
       },
     });
 

@@ -240,208 +240,204 @@ export function RevenueTrend() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-100 px-4 py-8">
-      <div
-        ref={cardRef}
-        className="max-w-8xl mx-auto rounded-[28px] border border-neutral-200 bg-white p-6 shadow-sm"
-      >
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <h1 className="max-w-xs text-xl font-semibold leading-snug text-neutral-900">
-            {comparing
-              ? "This Week's Revenue Trend vs Previous Period"
-              : "This Week's Revenue Trend"}
-          </h1>
+    <div
+      ref={cardRef}
+      className="max-w-8xl mx-auto rounded-[28px] border border-neutral-200 bg-white p-6 shadow-sm"
+    >
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <h1 className="max-w-xs text-xl font-semibold leading-snug text-neutral-900">
+          {comparing ? "This Week's Revenue Trend vs Previous Period" : "This Week's Revenue Trend"}
+        </h1>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <SeriesToggle
-              checked={visible.pos}
-              color={COLORS.pos}
-              label="POS Revenue"
-              onChange={(checked) => setVisible((state) => ({ ...state, pos: checked }))}
-            />
-            <SeriesToggle
-              checked={visible.eatclub}
-              color={COLORS.eatclub}
-              label="Eatclub Revenue"
-              onChange={(checked) => setVisible((state) => ({ ...state, eatclub: checked }))}
-            />
-            <SeriesToggle
-              checked={visible.labour}
-              color={COLORS.labour}
-              label="Labour Costs"
-              onChange={(checked) => setVisible((state) => ({ ...state, labour: checked }))}
-            />
-            <button
-              type="button"
-              onClick={handleCompare}
-              className={cn(
-                'inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium shadow-sm',
-                comparing ? 'bg-neutral-900 text-white' : 'bg-amber-300 text-neutral-900',
-              )}
-            >
-              <BarChart3 className="size-4" />
-              Compare to Previous
-            </button>
-            <button
-              type="button"
-              onClick={handleExport}
-              disabled={exporting}
-              className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-800 shadow-sm"
-            >
-              <Download className="size-4" />
-              Export PNG
-            </button>
-          </div>
-        </div>
-
-        <div className="mt-6 grid gap-4 md:grid-cols-3">
-          <SummaryCard
-            label="Total Revenue"
-            value={current?.summary.totalRevenue ?? 0}
-            comparison={comparison?.totalRevenue}
-            formatValue={formatCurrency}
-          />
-          <SummaryCard
-            label="Average per Day"
-            value={current?.summary.averagePerDay ?? 0}
-            comparison={comparison?.averagePerDay}
-            formatValue={formatCurrency}
-          />
-          <SummaryCard
-            label="Total Covers"
-            value={current?.summary.totalCovers ?? 0}
-            comparison={comparison?.totalCovers}
-            formatValue={(value) => Math.round(value).toLocaleString('en-US')}
-          />
-        </div>
-
-        <div className="mt-6 h-[360px]">
-          {isLoading && !current ? (
-            <div className="flex h-full items-center justify-center text-sm text-neutral-500">
-              Loading chart...
-            </div>
-          ) : (
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} barGap={2} barCategoryGap="10%">
-                <CartesianGrid vertical={false} stroke="#ececec" />
-                <XAxis
-                  dataKey="day"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: '#737373', fontSize: 12 }}
-                />
-                <YAxis
-                  axisLine={false}
-                  tickLine={false}
-                  tickFormatter={formatAxis}
-                  tick={{ fill: '#737373', fontSize: 12 }}
-                  domain={[0, 3000]}
-                  ticks={[0, 750, 1500, 2250, 3000]}
-                />
-                <Tooltip cursor={{ fill: 'rgba(0,0,0,0.03)' }} content={<ChartTooltipContent />} />
-                {visible.pos ? (
-                  <Bar
-                    dataKey="posRevenue"
-                    name={comparing ? 'POS Revenue (Current)' : 'POS Revenue'}
-                    fill={COLORS.pos}
-                    stackId="current"
-                    maxBarSize={55}
-                    radius={visible.eatclub ? [0, 0, 0, 0] : [6, 6, 0, 0]}
-                  />
-                ) : null}
-                {visible.eatclub ? (
-                  <Bar
-                    dataKey="eatclubRevenue"
-                    name={comparing ? 'Eatclub Revenue (Current)' : 'Eatclub Revenue'}
-                    fill={COLORS.eatclub}
-                    stackId="current"
-                    maxBarSize={55}
-                    radius={[6, 6, 0, 0]}
-                  />
-                ) : null}
-                {visible.labour ? (
-                  <Bar
-                    dataKey="labourCosts"
-                    name={comparing ? 'Labour Costs (Current)' : 'Labour Costs'}
-                    fill={COLORS.labour}
-                    stackId="currentLabour"
-                    maxBarSize={55}
-                    radius={[6, 6, 0, 0]}
-                  />
-                ) : null}
-                {comparing && visible.pos ? (
-                  <Bar
-                    dataKey="prevPosRevenue"
-                    name="Direct Revenue (Previous)"
-                    fill={COLORS.prevPos}
-                    stackId="previous"
-                    maxBarSize={55}
-                    radius={visible.eatclub ? [0, 0, 0, 0] : [6, 6, 0, 0]}
-                  />
-                ) : null}
-                {comparing && visible.eatclub ? (
-                  <Bar
-                    dataKey="prevEatclubRevenue"
-                    name="Total Revenue (Previous)"
-                    fill={COLORS.prevEatclub}
-                    stackId="previous"
-                    maxBarSize={55}
-                    radius={[6, 6, 0, 0]}
-                  />
-                ) : null}
-                {comparing && visible.labour ? (
-                  <Bar
-                    dataKey="prevLabourCosts"
-                    name="Labour Costs (Previous)"
-                    fill={COLORS.prevLabour}
-                    stackId="previousLabour"
-                    maxBarSize={55}
-                    radius={[6, 6, 0, 0]}
-                  />
-                ) : null}
-                <Bar
-                  dataKey="eventAnchor"
-                  fill="transparent"
-                  legendType="none"
-                  isAnimationActive={false}
-                  maxBarSize={55}
-                >
-                  <LabelList dataKey="eventImpact" content={EventImpactLabel} />
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          )}
-        </div>
-
-        <div className="mt-4 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-neutral-600">
-          <LegendSwatch
+        <div className="flex flex-wrap items-center gap-3">
+          <SeriesToggle
+            checked={visible.pos}
             color={COLORS.pos}
-            label={comparing ? 'POS Revenue (Current)' : 'POS Revenue'}
+            label="POS Revenue"
+            onChange={(checked) => setVisible((state) => ({ ...state, pos: checked }))}
           />
-          <LegendSwatch
+          <SeriesToggle
+            checked={visible.eatclub}
             color={COLORS.eatclub}
-            label={comparing ? 'Eatclub Revenue (Current)' : 'Eatclub Revenue'}
+            label="Eatclub Revenue"
+            onChange={(checked) => setVisible((state) => ({ ...state, eatclub: checked }))}
           />
-          <LegendSwatch
+          <SeriesToggle
+            checked={visible.labour}
             color={COLORS.labour}
-            label={comparing ? 'Labour Costs (Current)' : 'Labour Costs'}
+            label="Labour Costs"
+            onChange={(checked) => setVisible((state) => ({ ...state, labour: checked }))}
           />
-          {comparing ? (
-            <>
-              <LegendSwatch color={COLORS.prevPos} label="Direct Revenue (Previous)" />
-              <LegendSwatch color={COLORS.prevEatclub} label="Total Revenue (Previous)" />
-              <LegendSwatch color={COLORS.prevLabour} label="Labour Costs (Previous)" />
-            </>
-          ) : null}
-          <span className="inline-flex items-center gap-1.5">
-            <EventImpactIcon impact="positive" />
-            Positive Event Impact
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <EventImpactIcon impact="negative" />
-            Negative Event Impact
-          </span>
+          <button
+            type="button"
+            onClick={handleCompare}
+            className={cn(
+              'inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium shadow-sm',
+              comparing ? 'bg-neutral-900 text-white' : 'bg-amber-300 text-neutral-900',
+            )}
+          >
+            <BarChart3 className="size-4" />
+            Compare to Previous
+          </button>
+          <button
+            type="button"
+            onClick={handleExport}
+            disabled={exporting}
+            className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-800 shadow-sm"
+          >
+            <Download className="size-4" />
+            Export PNG
+          </button>
         </div>
+      </div>
+
+      <div className="mt-6 grid gap-4 md:grid-cols-3">
+        <SummaryCard
+          label="Total Revenue"
+          value={current?.summary.totalRevenue ?? 0}
+          comparison={comparison?.totalRevenue}
+          formatValue={formatCurrency}
+        />
+        <SummaryCard
+          label="Average per Day"
+          value={current?.summary.averagePerDay ?? 0}
+          comparison={comparison?.averagePerDay}
+          formatValue={formatCurrency}
+        />
+        <SummaryCard
+          label="Total Covers"
+          value={current?.summary.totalCovers ?? 0}
+          comparison={comparison?.totalCovers}
+          formatValue={(value) => Math.round(value).toLocaleString('en-US')}
+        />
+      </div>
+
+      <div className="mt-6 h-[360px]">
+        {isLoading && !current ? (
+          <div className="flex h-full items-center justify-center text-sm text-neutral-500">
+            Loading chart...
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={chartData} barGap={2} barCategoryGap="10%">
+              <CartesianGrid vertical={false} stroke="#ececec" />
+              <XAxis
+                dataKey="day"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: '#737373', fontSize: 12 }}
+              />
+              <YAxis
+                axisLine={false}
+                tickLine={false}
+                tickFormatter={formatAxis}
+                tick={{ fill: '#737373', fontSize: 12 }}
+                domain={[0, 3000]}
+                ticks={[0, 750, 1500, 2250, 3000]}
+              />
+              <Tooltip cursor={{ fill: 'rgba(0,0,0,0.03)' }} content={<ChartTooltipContent />} />
+              {visible.pos ? (
+                <Bar
+                  dataKey="posRevenue"
+                  name={comparing ? 'POS Revenue (Current)' : 'POS Revenue'}
+                  fill={COLORS.pos}
+                  stackId="current"
+                  maxBarSize={55}
+                  radius={visible.eatclub ? [0, 0, 0, 0] : [6, 6, 0, 0]}
+                />
+              ) : null}
+              {visible.eatclub ? (
+                <Bar
+                  dataKey="eatclubRevenue"
+                  name={comparing ? 'Eatclub Revenue (Current)' : 'Eatclub Revenue'}
+                  fill={COLORS.eatclub}
+                  stackId="current"
+                  maxBarSize={55}
+                  radius={[6, 6, 0, 0]}
+                />
+              ) : null}
+              {visible.labour ? (
+                <Bar
+                  dataKey="labourCosts"
+                  name={comparing ? 'Labour Costs (Current)' : 'Labour Costs'}
+                  fill={COLORS.labour}
+                  stackId="currentLabour"
+                  maxBarSize={55}
+                  radius={[6, 6, 0, 0]}
+                />
+              ) : null}
+              {comparing && visible.pos ? (
+                <Bar
+                  dataKey="prevPosRevenue"
+                  name="Direct Revenue (Previous)"
+                  fill={COLORS.prevPos}
+                  stackId="previous"
+                  maxBarSize={55}
+                  radius={visible.eatclub ? [0, 0, 0, 0] : [6, 6, 0, 0]}
+                />
+              ) : null}
+              {comparing && visible.eatclub ? (
+                <Bar
+                  dataKey="prevEatclubRevenue"
+                  name="Total Revenue (Previous)"
+                  fill={COLORS.prevEatclub}
+                  stackId="previous"
+                  maxBarSize={55}
+                  radius={[6, 6, 0, 0]}
+                />
+              ) : null}
+              {comparing && visible.labour ? (
+                <Bar
+                  dataKey="prevLabourCosts"
+                  name="Labour Costs (Previous)"
+                  fill={COLORS.prevLabour}
+                  stackId="previousLabour"
+                  maxBarSize={55}
+                  radius={[6, 6, 0, 0]}
+                />
+              ) : null}
+              <Bar
+                dataKey="eventAnchor"
+                fill="transparent"
+                legendType="none"
+                isAnimationActive={false}
+                maxBarSize={55}
+              >
+                <LabelList dataKey="eventImpact" content={EventImpactLabel} />
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        )}
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-neutral-600">
+        <LegendSwatch
+          color={COLORS.pos}
+          label={comparing ? 'POS Revenue (Current)' : 'POS Revenue'}
+        />
+        <LegendSwatch
+          color={COLORS.eatclub}
+          label={comparing ? 'Eatclub Revenue (Current)' : 'Eatclub Revenue'}
+        />
+        <LegendSwatch
+          color={COLORS.labour}
+          label={comparing ? 'Labour Costs (Current)' : 'Labour Costs'}
+        />
+        {comparing ? (
+          <>
+            <LegendSwatch color={COLORS.prevPos} label="Direct Revenue (Previous)" />
+            <LegendSwatch color={COLORS.prevEatclub} label="Total Revenue (Previous)" />
+            <LegendSwatch color={COLORS.prevLabour} label="Labour Costs (Previous)" />
+          </>
+        ) : null}
+        <span className="inline-flex items-center gap-1.5">
+          <EventImpactIcon impact="positive" />
+          Positive Event Impact
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <EventImpactIcon impact="negative" />
+          Negative Event Impact
+        </span>
       </div>
     </div>
   );

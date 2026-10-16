@@ -19,6 +19,7 @@ interface UpsertDailyRevenueRequest {
   posRevenue: number;
   eatclubRevenue: number;
   labourCosts: number;
+  covers: number;
 }
 
 interface GetDailyRevenueResponse extends SuccessResponse<DailyRevenueLookup> {}
