@@ -14,13 +14,6 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (!isPublic && !refreshToken) {
-    const url = new URL('/login', request.url);
-    url.searchParams.set('redirect', pathname);
-
-    // return NextResponse.redirect(url);
-  }
-
   return NextResponse.next();
 }
 

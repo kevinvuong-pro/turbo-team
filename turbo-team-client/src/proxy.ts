@@ -8,17 +8,10 @@ export function proxy(request: NextRequest) {
   const isPublic = isPublicRoute(pathname);
   const refreshToken = request.cookies.get('refreshToken')?.value;
 
-  if (isPublic && refreshToken && !pathname.startsWith('/stats')) {
+  if (isPublic && refreshToken) {
     const url = new URL('/', request.url);
 
     return NextResponse.redirect(url);
-  }
-
-  if (!isPublic && !refreshToken) {
-    const url = new URL('/stats', request.url);
-    url.searchParams.set('redirect', pathname);
-
-    // return NextResponse.redirect(url);
   }
 
   return NextResponse.next();
