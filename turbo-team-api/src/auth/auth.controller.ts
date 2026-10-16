@@ -48,20 +48,21 @@ export class AuthController {
     const deviceInfo = DeviceUtil.extractDeviceInfo(req);
     const result = await this.authService.login(loginDto, deviceInfo);
 
-    // Set access token in httpOnly cookie
-    res.cookie(AUTH_CONSTANTS.ACCESS_TOKEN_KEY, result.accessToken, {
+    const cookieOptions = {
+      path: '/',
+      secure: true,
       httpOnly: true,
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: AUTH_CONSTANTS.ACCESS_TOKEN_EXPIRATION, // 1 hour
+      sameSite: 'none' as const,
+    };
+
+    res.cookie(AUTH_CONSTANTS.ACCESS_TOKEN_KEY, result.accessToken, {
+      ...cookieOptions,
+      maxAge: AUTH_CONSTANTS.ACCESS_TOKEN_EXPIRATION,
     });
 
-    // Set refresh token in httpOnly cookie
     res.cookie(AUTH_CONSTANTS.REFRESH_TOKEN_KEY, result.refreshToken, {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: AUTH_CONSTANTS.REFRESH_TOKEN_EXPIRATION, // 7 days
+      ...cookieOptions,
+      maxAge: AUTH_CONSTANTS.REFRESH_TOKEN_EXPIRATION,
     });
 
     return result;
@@ -102,20 +103,21 @@ export class AuthController {
 
       const result = await this.authService.refreshTokens(refreshToken, deviceInfo);
 
-      // Set new access token in httpOnly cookie
-      res.cookie(AUTH_CONSTANTS.ACCESS_TOKEN_KEY, result.accessToken, {
+      const cookieOptions = {
+        path: '/',
+        secure: true,
         httpOnly: true,
-        sameSite: 'lax',
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: AUTH_CONSTANTS.ACCESS_TOKEN_EXPIRATION, // 1 hour
+        sameSite: 'none' as const,
+      };
+
+      res.cookie(AUTH_CONSTANTS.ACCESS_TOKEN_KEY, result.accessToken, {
+        ...cookieOptions,
+        maxAge: AUTH_CONSTANTS.ACCESS_TOKEN_EXPIRATION,
       });
 
-      // Set new refresh token in httpOnly cookie
       res.cookie(AUTH_CONSTANTS.REFRESH_TOKEN_KEY, result.refreshToken, {
-        httpOnly: true,
-        sameSite: 'lax',
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: AUTH_CONSTANTS.REFRESH_TOKEN_EXPIRATION, // 7 days
+        ...cookieOptions,
+        maxAge: AUTH_CONSTANTS.REFRESH_TOKEN_EXPIRATION,
       });
 
       return result;
@@ -146,20 +148,21 @@ export class AuthController {
 
     const result = await this.authService.googleLogin(req.user as any, deviceInfo);
 
-    // Set access token in httpOnly cookie
-    res.cookie(AUTH_CONSTANTS.ACCESS_TOKEN_KEY, result.accessToken, {
+    const cookieOptions = {
+      path: '/',
+      secure: true,
       httpOnly: true,
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: AUTH_CONSTANTS.ACCESS_TOKEN_EXPIRATION, // 1 hour
+      sameSite: 'none' as const,
+    };
+
+    res.cookie(AUTH_CONSTANTS.ACCESS_TOKEN_KEY, result.accessToken, {
+      ...cookieOptions,
+      maxAge: AUTH_CONSTANTS.ACCESS_TOKEN_EXPIRATION,
     });
 
-    // Set refresh token in httpOnly cookie
     res.cookie(AUTH_CONSTANTS.REFRESH_TOKEN_KEY, result.refreshToken, {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: AUTH_CONSTANTS.REFRESH_TOKEN_EXPIRATION, // 7 days
+      ...cookieOptions,
+      maxAge: AUTH_CONSTANTS.REFRESH_TOKEN_EXPIRATION,
     });
 
     // Get the redirect URL from state parameter (returned by Google OAuth flow)
