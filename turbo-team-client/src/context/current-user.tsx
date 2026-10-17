@@ -1,18 +1,33 @@
 'use client';
 
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { ReactNode, useContext, createContext } from 'react';
 
 import { getMe } from '@/services/users';
 import { CurrentUserContextType } from '@/types/user';
+import { clearTokens } from '@/lib/auth-token-storage';
 
 const CurrentUserContext = createContext<CurrentUserContextType | undefined>(undefined);
 
 export function CurrentUserProvider({ children }: { children: ReactNode }) {
-  const { isLoading, data: currentUser } = useQuery({
+  const router = useRouter();
+  const {
+    isLoading,
+    data: currentUser,
+    error,
+  } = useQuery({
     queryFn: getMe,
     queryKey: ['getMe'],
   });
+
+  useEffect(() => {
+    if (!isLoading && (error || !currentUser)) {
+      clearTokens();
+      router.replace('/login');
+    }
+  }, [currentUser, error, isLoading, router]);
 
   if (isLoading || !currentUser) return null;
 

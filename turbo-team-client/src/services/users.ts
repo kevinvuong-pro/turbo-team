@@ -17,6 +17,7 @@ import {
 } from '@/types';
 import { apiClient } from '@/lib/api-client';
 import { handleApiError } from '@/lib/error-handler';
+import { clearTokens } from '@/lib/auth-token-storage';
 
 const getMe = async (_data?: GetMeRequest): Promise<CurrentUser> => {
   try {
@@ -76,6 +77,7 @@ const changePassword = async (data: ChangePasswordRequest) => {
     const endpoint = '/users/password';
 
     const response: ChangePasswordResponse = await apiClient.put(endpoint, data);
+    clearTokens();
 
     return response.data;
   } catch (error) {
@@ -88,6 +90,7 @@ const logoutAllDevices = async (_data?: LogoutAllDevicesRequest) => {
     const endpoint = '/users/sessions';
 
     const response: LogoutAllDevicesResponse = await apiClient.delete(endpoint);
+    clearTokens();
 
     return response.data;
   } catch (error) {

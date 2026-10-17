@@ -33,9 +33,9 @@ export default function SessionsPage() {
   });
 
   return (
-    <div className="flex flex-col gap-4 md:gap-6">
-      <Card>
-        <CardHeader>
+    <div className="@container/main flex max-w-full min-w-0 flex-col gap-4 md:gap-6">
+      <Card className="max-w-full min-w-0">
+        <CardHeader className="px-4 sm:px-6">
           <CardTitle>Login Sessions</CardTitle>
           <CardDescription>
             Manage and monitor all active login sessions for your account.
@@ -50,10 +50,10 @@ export default function SessionsPage() {
             </div>
           </CardAction>
         </CardHeader>
-        <CardContent className="flex size-full flex-col gap-4">
+        <CardContent className="flex max-w-full min-w-0 flex-col gap-4 overflow-x-auto px-4 sm:px-6">
           {isLoading ? (
-            <div className="space-y-4">
-              <div className="overflow-hidden rounded-md border">
+            <div className="max-w-full min-w-0 space-y-4">
+              <div className="max-w-full overflow-x-auto rounded-md border">
                 {/* Table Header */}
                 <div className="bg-muted/50 border-b p-4">
                   <div className="flex items-center gap-4">
@@ -96,7 +96,7 @@ export default function SessionsPage() {
             </div>
           ) : (
             <>
-              <div className="overflow-hidden rounded-md border">
+              <div className="max-w-full overflow-x-auto rounded-md border">
                 <DataTable table={table} columns={sessionsColumns} />
               </div>
               <DataTablePagination table={table} />

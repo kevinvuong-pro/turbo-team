@@ -7,7 +7,8 @@ export function GoogleButton({ className, ...props }: React.ComponentProps<typeo
   const handleGoogleLogin = () => {
     const currentOrigin = window.location.origin;
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-    const href = `${apiUrl}/auth/google?redirect_url=${encodeURIComponent(currentOrigin)}`;
+    const callbackUrl = `${currentOrigin}/auth/callback`;
+    const href = `${apiUrl}/auth/google?redirect_url=${encodeURIComponent(callbackUrl)}`;
 
     window.location.href = href;
   };

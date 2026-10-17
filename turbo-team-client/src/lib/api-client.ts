@@ -1,7 +1,9 @@
 import axios from 'axios';
 
-const skipRefreshEnpoints = ['/auth/login'];
+import { setTokens, clearTokens, getAccessToken, getRefreshToken } from './auth-token-storage';
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const skipRefreshEndpoints = ['/auth/login', '/auth/refresh'];
 
 let isRefreshing = false;
 let failedQueue: Array<{
@@ -22,8 +24,14 @@ const processQueue = (error: unknown, status: string | null = null) => {
 
 const apiClient = axios.create({
   baseURL: API_URL,
-  withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
+});
+apiClient.interceptors.request.use((config) => {
+  const accessToken = getAccessToken();
+
+  if (accessToken) config.headers.Authorization = `Bearer ${accessToken}`;
+
+  return config;
 });
 apiClient.interceptors.response.use(
   (response) => response.data,
@@ -39,7 +47,7 @@ apiClient.interceptors.response.use(
     }
 
     if (!originalRequest._retry && error.response?.status === 401) {
-      if (skipRefreshEnpoints.some((path) => originalRequest.url?.includes(path))) {
+      if (skipRefreshEndpoints.some((path) => originalRequest.url?.includes(path))) {
         return Promise.reject(error);
       }
 
@@ -55,12 +63,18 @@ apiClient.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        await axios.post(`${API_URL}/auth/refresh`, {}, { withCredentials: true });
+        const refreshToken = getRefreshToken();
+        if (!refreshToken) throw error;
+
+        const refreshResponse = await axios.post(`${API_URL}/auth/refresh`, { refreshToken });
+        const tokens = refreshResponse.data.data;
+        setTokens(tokens.accessToken, tokens.refreshToken);
 
         processQueue(null, 'success');
 
         return apiClient(originalRequest);
       } catch (refreshError) {
+        clearTokens();
         processQueue(refreshError, null);
 
         if (typeof window !== 'undefined') {

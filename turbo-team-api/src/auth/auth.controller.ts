@@ -15,7 +15,6 @@ import type { Request, Response } from 'express';
 import { LoginDto } from '@/auth/dto/login.dto';
 import { AuthService } from '@/auth/auth.service';
 import { RegisterDto } from '@/auth/dto/register.dto';
-import { AUTH_CONSTANTS } from './constants/auth.constants';
 import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
 import { RefreshTokenDto } from '@/auth/dto/refresh-token.dto';
 import { DeviceUtil, extractFrontendUrl } from '@/common/utils';
@@ -43,48 +42,21 @@ export class AuthController {
   async login(
     @Req() req: Request,
     @Body() loginDto: LoginDto,
-    @Res({ passthrough: true }) res: Response,
   ) {
     const deviceInfo = DeviceUtil.extractDeviceInfo(req);
-    const result = await this.authService.login(loginDto, deviceInfo);
-
-    const cookieOptions = {
-      path: '/',
-      secure: true,
-      httpOnly: true,
-      sameSite: 'none' as const,
-    };
-
-    res.cookie(AUTH_CONSTANTS.ACCESS_TOKEN_KEY, result.accessToken, {
-      ...cookieOptions,
-      maxAge: AUTH_CONSTANTS.ACCESS_TOKEN_EXPIRATION,
-    });
-
-    res.cookie(AUTH_CONSTANTS.REFRESH_TOKEN_KEY, result.refreshToken, {
-      ...cookieOptions,
-      maxAge: AUTH_CONSTANTS.REFRESH_TOKEN_EXPIRATION,
-    });
-
-    return result;
+    return this.authService.login(loginDto, deviceInfo);
   }
 
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard)
   async logout(
-    @Req() req: Request,
     @CurrentUser() user: UserPayload,
     @Body() refreshTokenDto: RefreshTokenDto,
-    @Res({ passthrough: true }) res: Response,
   ) {
-    // Get refresh token from cookie if not provided in body
-    const refreshToken = refreshTokenDto.refreshToken || req.cookies?.refreshToken;
+    const refreshToken = refreshTokenDto.refreshToken;
 
     await this.authService.logout(user.id, refreshToken);
-
-    // Clear authentication cookies after logout
-    res.clearCookie(AUTH_CONSTANTS.ACCESS_TOKEN_KEY);
-    res.clearCookie(AUTH_CONSTANTS.REFRESH_TOKEN_KEY);
   }
 
   @Public()
@@ -93,41 +65,9 @@ export class AuthController {
   async refreshTokens(
     @Req() req: Request,
     @Body() refreshTokenDto: RefreshTokenDto,
-    @Res({ passthrough: true }) res: Response,
   ) {
-    try {
-      const deviceInfo = DeviceUtil.extractDeviceInfo(req);
-
-      // Get refresh token from cookie if not provided in body
-      const refreshToken = refreshTokenDto.refreshToken || req.cookies?.refreshToken;
-
-      const result = await this.authService.refreshTokens(refreshToken, deviceInfo);
-
-      const cookieOptions = {
-        path: '/',
-        secure: true,
-        httpOnly: true,
-        sameSite: 'none' as const,
-      };
-
-      res.cookie(AUTH_CONSTANTS.ACCESS_TOKEN_KEY, result.accessToken, {
-        ...cookieOptions,
-        maxAge: AUTH_CONSTANTS.ACCESS_TOKEN_EXPIRATION,
-      });
-
-      res.cookie(AUTH_CONSTANTS.REFRESH_TOKEN_KEY, result.refreshToken, {
-        ...cookieOptions,
-        maxAge: AUTH_CONSTANTS.REFRESH_TOKEN_EXPIRATION,
-      });
-
-      return result;
-    } catch (error) {
-      // Clear invalid cookies on refresh token error
-      res.clearCookie(AUTH_CONSTANTS.ACCESS_TOKEN_KEY);
-      res.clearCookie(AUTH_CONSTANTS.REFRESH_TOKEN_KEY);
-
-      throw error; // Re-throw để NestJS handle
-    }
+    const deviceInfo = DeviceUtil.extractDeviceInfo(req);
+    return this.authService.refreshTokens(refreshTokenDto.refreshToken, deviceInfo);
   }
 
   @Public()
@@ -148,26 +88,14 @@ export class AuthController {
 
     const result = await this.authService.googleLogin(req.user as any, deviceInfo);
 
-    const cookieOptions = {
-      path: '/',
-      secure: true,
-      httpOnly: true,
-      sameSite: 'none' as const,
-    };
-
-    res.cookie(AUTH_CONSTANTS.ACCESS_TOKEN_KEY, result.accessToken, {
-      ...cookieOptions,
-      maxAge: AUTH_CONSTANTS.ACCESS_TOKEN_EXPIRATION,
-    });
-
-    res.cookie(AUTH_CONSTANTS.REFRESH_TOKEN_KEY, result.refreshToken, {
-      ...cookieOptions,
-      maxAge: AUTH_CONSTANTS.REFRESH_TOKEN_EXPIRATION,
-    });
-
-    // Get the redirect URL from state parameter (returned by Google OAuth flow)
+    // Return tokens in the URL fragment so the frontend can store them locally.
     const redirectUrl = req.query.state as string;
+    const redirect = new URL(redirectUrl);
+    redirect.hash = new URLSearchParams({
+      accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
+    }).toString();
 
-    res.redirect(redirectUrl);
+    res.redirect(redirect.toString());
   }
 }

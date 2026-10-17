@@ -17,12 +17,12 @@ interface DataTablePaginationProps<TData> {
 
 export function DataTablePagination<TData>({ table }: DataTablePaginationProps<TData>) {
   return (
-    <div className="flex items-center justify-between px-4">
+    <div className="flex flex-wrap items-center justify-between gap-4 px-0 sm:px-4">
       <div className="text-muted-foreground hidden flex-1 text-sm lg:flex">
         {table.getFilteredSelectedRowModel().rows.length} of{' '}
         {table.getFilteredRowModel().rows.length} row(s) selected.
       </div>
-      <div className="flex w-full items-center gap-8 lg:w-fit">
+      <div className="flex w-full min-w-0 items-center justify-between gap-4 lg:w-fit">
         <div className="hidden items-center gap-2 lg:flex">
           <Label htmlFor="rows-per-page" className="text-sm font-medium">
             Rows per page
@@ -45,7 +45,7 @@ export function DataTablePagination<TData>({ table }: DataTablePaginationProps<T
             </SelectContent>
           </Select>
         </div>
-        <div className="flex w-fit items-center justify-center text-sm font-medium">
+        <div className="flex w-fit shrink-0 items-center justify-center text-sm font-medium whitespace-nowrap">
           Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
         </div>
         <div className="ml-auto flex items-center gap-2 lg:ml-0">

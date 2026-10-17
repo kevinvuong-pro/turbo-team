@@ -2,6 +2,7 @@
 
 import { z } from 'zod';
 import { toast } from 'sonner';
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useMutation } from '@tanstack/react-query';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -18,6 +19,7 @@ import { login } from '@/services/auth';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useSearchParams } from 'next/navigation';
+import { setTokens } from '@/lib/auth-token-storage';
 
 const FormSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email address.' }),
@@ -27,6 +29,18 @@ const FormSchema = z.object({
 export function LoginForm() {
   const searchParams = useSearchParams();
   const { mutate, isPending } = useMutation({ mutationFn: login });
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.hash.slice(1));
+    const accessToken = params.get('accessToken');
+    const refreshToken = params.get('refreshToken');
+
+    if (accessToken && refreshToken) {
+      setTokens(accessToken, refreshToken);
+      window.history.replaceState(null, '', window.location.pathname);
+      window.location.href = '/';
+    }
+  }, []);
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),

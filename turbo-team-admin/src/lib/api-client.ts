@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-const skipRefreshEnpoints = ['/auth/login'];
+import { setTokens, clearTokens, getAccessToken, getRefreshToken } from './auth-token-storage';
+
+const skipRefreshEndpoints = ['/auth/login', '/auth/refresh'];
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 let isRefreshing = false;
@@ -24,7 +26,6 @@ const processQueue = (error: unknown, token: string | null = null) => {
 
 const apiClient = axios.create({
   baseURL: API_URL,
-  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -34,7 +35,7 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use(
   (config) => {
     if (typeof window !== 'undefined') {
-      const accessToken = localStorage.getItem('accessToken');
+      const accessToken = getAccessToken();
 
       if (accessToken) {
         config.headers.Authorization = `Bearer ${accessToken}`;
@@ -69,7 +70,7 @@ apiClient.interceptors.response.use(
     if (
       error.response?.status !== 401 ||
       originalRequest._retry ||
-      skipRefreshEnpoints.some((path) => originalRequest.url?.includes(path))
+      skipRefreshEndpoints.some((path) => originalRequest.url?.includes(path))
     ) {
       return Promise.reject(error);
     }
@@ -85,31 +86,14 @@ apiClient.interceptors.response.use(
     isRefreshing = true;
 
     try {
-      const refreshToken = localStorage.getItem('refreshToken');
-
-      if (!refreshToken) {
-        throw new Error('Refresh token không tồn tại');
-      }
+      const refreshToken = getRefreshToken();
+      if (!refreshToken) throw error;
 
       // Gọi axios trực tiếp để không kích hoạt interceptor của apiClient
-      const response = await axios.post(
-        `${API_URL}/auth/refresh`,
-        {},
-        {
-          withCredentials: true,
-          headers: {
-            Authorization: `Bearer ${refreshToken}`,
-          },
-        },
-      );
-
-      const { accessToken, refreshToken: newRefreshToken } = response.data;
-
-      localStorage.setItem('accessToken', accessToken);
-
-      if (newRefreshToken) {
-        localStorage.setItem('refreshToken', newRefreshToken);
-      }
+      const response = await axios.post(`${API_URL}/auth/refresh`, { refreshToken });
+      const tokens = response.data.data;
+      const { accessToken } = tokens;
+      setTokens(tokens.accessToken, tokens.refreshToken);
 
       processQueue(null, accessToken);
 
@@ -121,8 +105,7 @@ apiClient.interceptors.response.use(
       processQueue(refreshError, null);
 
       if (typeof window !== 'undefined') {
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
+        clearTokens();
 
         window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
       }
