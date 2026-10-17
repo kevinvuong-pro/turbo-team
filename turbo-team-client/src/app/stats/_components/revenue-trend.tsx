@@ -1,7 +1,6 @@
 'use client';
 
-import { toPng } from 'html-to-image';
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   Bar,
@@ -159,10 +158,14 @@ function ChartTooltipContent({
   );
 }
 
-export function RevenueTrend() {
-  const cardRef = useRef<HTMLDivElement>(null);
+export function RevenueTrend({
+  exporting,
+  onExport,
+}: {
+  exporting: boolean;
+  onExport: () => void;
+}) {
   const [comparing, setComparing] = useState(false);
-  const [exporting, setExporting] = useState(false);
   const [visible, setVisible] = useState<Record<SeriesKey, boolean>>({
     pos: true,
     eatclub: true,
@@ -216,34 +219,12 @@ export function RevenueTrend() {
     });
   }, [current, previous, visible]);
 
-  const handleExport = async () => {
-    if (!cardRef.current) return;
-
-    try {
-      setExporting(true);
-      const dataUrl = await toPng(cardRef.current, {
-        cacheBust: true,
-        pixelRatio: 2,
-        backgroundColor: '#ffffff',
-      });
-      const link = document.createElement('a');
-      link.download = 'revenue-trend.png';
-      link.href = dataUrl;
-      link.click();
-    } finally {
-      setExporting(false);
-    }
-  };
-
   const handleCompare = () => {
     setComparing((value) => !value);
   };
 
   return (
-    <div
-      ref={cardRef}
-      className="max-w-8xl mx-auto rounded-[28px] border border-neutral-200 bg-white p-6 shadow-sm"
-    >
+    <div className="max-w-8xl mx-auto rounded-[28px] border border-neutral-200 bg-white p-6 shadow-sm">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <h1 className="max-w-xs text-xl font-semibold leading-snug text-neutral-900">
           {comparing ? "This Week's Revenue Trend vs Previous Period" : "This Week's Revenue Trend"}
@@ -281,7 +262,7 @@ export function RevenueTrend() {
           </button>
           <button
             type="button"
-            onClick={handleExport}
+            onClick={onExport}
             disabled={exporting}
             className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-800 shadow-sm"
           >
