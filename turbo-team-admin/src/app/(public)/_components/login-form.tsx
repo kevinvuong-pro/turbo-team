@@ -39,7 +39,10 @@ export function LoginForm() {
   const onSubmit = (data: z.infer<typeof FormSchema>) => {
     mutate(data, {
       onError: (err) => toast.error(err.message),
-      onSuccess: () => {
+      onSuccess: (data) => {
+        localStorage.setItem('accessToken', data.accessToken);
+        localStorage.setItem('refreshToken', data.refreshToken);
+
         form.reset();
         window.location.href = searchParams.get('redirect') || '/';
       },
