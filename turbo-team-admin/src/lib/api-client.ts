@@ -1,5 +1,6 @@
 import axios from 'axios';
 
+import { getDeviceHeaders } from './device-info';
 import { setTokens, clearTokens, getAccessToken, getRefreshToken } from './auth-token-storage';
 
 const skipRefreshEndpoints = ['/auth/login', '/auth/refresh'];
@@ -33,7 +34,7 @@ const apiClient = axios.create({
 
 // 1. Gắn accessToken vào header
 apiClient.interceptors.request.use(
-  (config) => {
+  async (config) => {
     if (typeof window !== 'undefined') {
       const accessToken = getAccessToken();
 
@@ -41,6 +42,8 @@ apiClient.interceptors.request.use(
         config.headers.Authorization = `Bearer ${accessToken}`;
       }
     }
+
+    Object.assign(config.headers, await getDeviceHeaders());
 
     return config;
   },
@@ -90,7 +93,11 @@ apiClient.interceptors.response.use(
       if (!refreshToken) throw error;
 
       // Gọi axios trực tiếp để không kích hoạt interceptor của apiClient
-      const response = await axios.post(`${API_URL}/auth/refresh`, { refreshToken });
+      const response = await axios.post(
+        `${API_URL}/auth/refresh`,
+        { refreshToken },
+        { headers: await getDeviceHeaders() },
+      );
       const tokens = response.data.data;
       const { accessToken } = tokens;
       setTokens(tokens.accessToken, tokens.refreshToken);

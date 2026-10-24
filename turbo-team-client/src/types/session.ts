@@ -1,5 +1,6 @@
 interface Session {
   id: string;
+  location: string;
   createdAt: string;
   expiresAt: string;
   ipAddress: string;

@@ -150,6 +150,9 @@ export default function SessionsPage() {
                             <p className="text-xs text-muted-foreground">
                               {session.deviceType} • {session.ipAddress}
                             </p>
+                            <p className="text-xs text-muted-foreground">
+                              Location: {session.location}
+                            </p>
                             <div className="mt-2 space-y-1 text-xs">
                               <div className="flex justify-between">
                                 <span className="text-muted-foreground">

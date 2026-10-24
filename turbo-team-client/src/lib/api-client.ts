@@ -1,5 +1,6 @@
 import axios from 'axios';
 
+import { getDeviceHeaders } from './device-info';
 import { setTokens, clearTokens, getAccessToken, getRefreshToken } from './auth-token-storage';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -26,10 +27,12 @@ const apiClient = axios.create({
   baseURL: API_URL,
   headers: { 'Content-Type': 'application/json' },
 });
-apiClient.interceptors.request.use((config) => {
+apiClient.interceptors.request.use(async (config) => {
   const accessToken = getAccessToken();
 
   if (accessToken) config.headers.Authorization = `Bearer ${accessToken}`;
+
+  Object.assign(config.headers, await getDeviceHeaders());
 
   return config;
 });
@@ -66,7 +69,11 @@ apiClient.interceptors.response.use(
         const refreshToken = getRefreshToken();
         if (!refreshToken) throw error;
 
-        const refreshResponse = await axios.post(`${API_URL}/auth/refresh`, { refreshToken });
+        const refreshResponse = await axios.post(
+          `${API_URL}/auth/refresh`,
+          { refreshToken },
+          { headers: await getDeviceHeaders() },
+        );
         const tokens = refreshResponse.data.data;
         setTokens(tokens.accessToken, tokens.refreshToken);
 

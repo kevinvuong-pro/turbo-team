@@ -14,4 +14,12 @@ const getMe = async (_data?: GetMeRequest): Promise<CurrentUser> => {
   }
 };
 
-export { getMe };
+const logoutDevice = async (sessionId: string) => {
+  try {
+    await apiClient.delete(`/users/sessions/${sessionId}`);
+  } catch (error) {
+    throw handleApiError(error);
+  }
+};
+
+export { getMe, logoutDevice };
