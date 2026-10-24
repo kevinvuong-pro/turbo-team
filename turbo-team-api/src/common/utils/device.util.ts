@@ -1,3 +1,4 @@
+import { isIP } from 'node:net';
 import { Request } from 'express';
 import { Logger } from '@nestjs/common';
 import { UAParser } from 'ua-parser-js';
@@ -87,15 +88,20 @@ export class DeviceUtil {
   }
 
   private static getIpAddress(req: Request): string {
-    // Check for IP in various headers (for proxied requests)
     const forwarded = req.headers['x-forwarded-for'];
-    if (forwarded) {
-      const ips = (forwarded as string).split(',');
+    const forwardedIps = (Array.isArray(forwarded) ? forwarded : [forwarded])
+      .filter((value): value is string => typeof value === 'string')
+      .flatMap((value) => value.split(','))
+      .map((value) => value.trim())
+      .filter((value) => isIP(value) > 0);
+    const realIp = req.headers['x-real-ip'];
+    const fallbackIps = [
+      ...(Array.isArray(realIp) ? realIp : [realIp]),
+      req.socket.remoteAddress,
+    ].filter((value): value is string => typeof value === 'string' && isIP(value) > 0);
+    const ips = [...forwardedIps, ...fallbackIps];
 
-      return ips[0].trim();
-    }
-
-    return (req.headers['x-real-ip'] as string) || req.socket.remoteAddress || 'Unknown';
+    return ips.find((ip) => isIP(ip) === 6) || ips[0] || 'Unknown';
   }
 
   private static getDeviceType(userAgent: string): string {
