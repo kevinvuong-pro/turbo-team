@@ -150,21 +150,21 @@ export const sessionsColumns: ColumnDef<Session>[] = [
     cell: ({ row }) => <span>{row.original.location}</span>,
     header: ({ column }) => <DataTableColumnHeader column={column} title="Location" />,
   },
-  {
-    accessorKey: 'lastUsedAt',
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Last Used" />,
-    cell: ({ row }) => (
-      <span className="text-muted-foreground">
-        {new Date(row.original.lastUsedAt).toLocaleString('en-US', {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-        })}
-      </span>
-    ),
-  },
+  // {
+  //   accessorKey: 'lastUsedAt',
+  //   header: ({ column }) => <DataTableColumnHeader column={column} title="Last Used" />,
+  //   cell: ({ row }) => (
+  //     <span className="text-muted-foreground">
+  //       {new Date(row.original.lastUsedAt).toLocaleString('en-US', {
+  //         year: 'numeric',
+  //         month: 'short',
+  //         day: 'numeric',
+  //         hour: '2-digit',
+  //         minute: '2-digit',
+  //       })}
+  //     </span>
+  //   ),
+  // },
   {
     accessorKey: 'createdAt',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Created" />,

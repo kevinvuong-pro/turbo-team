@@ -54,28 +54,24 @@ export class DeviceUtil {
     const timeout = setTimeout(() => controller.abort(), 2000);
 
     try {
-      const response = await fetch(`https://ipapi.co/${encodeURIComponent(ipAddress)}/json/`, {
-        signal: controller.signal,
-        headers: { Accept: 'application/json' },
-      });
+      const response = await fetch(
+        `https://free.freeipapi.com/api/v1/json/${encodeURIComponent(ipAddress)}`,
+        {
+          signal: controller.signal,
+          headers: { Accept: 'application/json' },
+        },
+      );
 
       if (!response.ok) {
         throw new Error(`Geolocation request failed with status ${response.status}`);
       }
 
       const data = (await response.json()) as {
-        city?: string;
-        error?: boolean;
-        reason?: string;
-        region?: string;
-        country_name?: string;
+        regionName?: string;
+        countryName?: string;
       };
 
-      if (data.error) {
-        throw new Error(data.reason || 'Geolocation provider returned an error');
-      }
-
-      const location = [data.city, data.region, data.country_name].filter(Boolean).join(', ');
+      const location = [data.regionName, data.countryName].filter(Boolean).join(', ');
 
       return location || undefined;
     } catch (error) {

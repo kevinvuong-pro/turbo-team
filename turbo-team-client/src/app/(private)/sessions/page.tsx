@@ -139,10 +139,10 @@ export default function SessionsPage() {
                             {getDeviceIcon(session.deviceType)}
                           </div>
                           <div className="min-w-0 flex-1">
-                            <div className="flex flex-wrap items-center gap-2">
+                            <div className="flex items-center justify-between gap-2">
                               <p className="text-sm font-medium">{session.deviceName}</p>
                               {session.isCurrent && (
-                                <span className="inline-flex items-center rounded-full bg-primary px-2 py-0.5 text-xs font-bold text-primary-foreground">
+                                <span className="ml-auto inline-flex items-center rounded-full bg-primary px-2 py-0.5 text-xs font-bold text-primary-foreground">
                                   {t.sessions.currentDevice}
                                 </span>
                               )}
@@ -160,7 +160,7 @@ export default function SessionsPage() {
                                 </span>
                                 <span className="font-medium">{formatDate(session.createdAt)}</span>
                               </div>
-                              <div className="flex justify-between">
+                              {/* <div className="flex justify-between">
                                 <span className="text-muted-foreground">
                                   {t.sessions.lastUsed}:
                                 </span>
@@ -173,7 +173,7 @@ export default function SessionsPage() {
                                   {t.sessions.expiresAt}:
                                 </span>
                                 <span className="font-medium">{formatDate(session.expiresAt)}</span>
-                              </div>
+                              </div> */}
                             </div>
                           </div>
                         </div>
